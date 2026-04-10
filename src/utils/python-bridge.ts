@@ -77,6 +77,24 @@ export async function execPython(
       const result = JSON.parse(stdout) as LinuxHelperResult;
       return result;
     } catch {
+      // Handle multi-line JSON output (e.g., from atspi helper forwarding)
+      const lines = stdout.trim().split('\n').filter(Boolean);
+      for (const line of lines) {
+        try {
+          const result = JSON.parse(line) as LinuxHelperResult;
+          if (result.success) return result;
+        } catch {
+          continue;
+        }
+      }
+      // Return the last parseable line if no success found
+      for (let i = lines.length - 1; i >= 0; i--) {
+        try {
+          return JSON.parse(lines[i]) as LinuxHelperResult;
+        } catch {
+          continue;
+        }
+      }
       return {
         success: false,
         error: `Failed to parse JSON output from helper: ${stdout.substring(0, 200)}`,

@@ -23,7 +23,8 @@ if 'DISPLAY' not in os.environ:
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gtk, Gdk, GLib, cairo as Cairo
+from gi.repository import Gtk, Gdk, GLib
+import cairo as Cairo
 
 
 class ClickStyle(Enum):
@@ -141,7 +142,12 @@ class OverlayWindow(Gtk.Window):
             self.set_visual(visual)
 
         # Fullscreen
-        monitor_geom = screen.get_monitor_geometry(0)
+        display = Gdk.Display.get_default()
+        monitor = display.get_monitor(0) if display else None
+        if monitor:
+            monitor_geom = monitor.get_geometry()
+        else:
+            monitor_geom = screen.get_monitor_geometry(0)
         self.move(monitor_geom.x, monitor_geom.y)
         self.resize(monitor_geom.width, monitor_geom.height)
 
@@ -167,11 +173,20 @@ class OverlayWindow(Gtk.Window):
     def _on_realize(self, widget):
         """Set input shape to make window click-through after realized."""
         try:
-            # Create an empty Cairo region for click-through
             window = self.get_window()
             if window:
-                empty_region = Cairo.Region()
-                window.input_shape_combine_region(empty_region, 0, 0)
+                # GTK 3.18+ pass-through mode
+                if hasattr(window, 'set_pass_through'):
+                    window.set_pass_through(True)
+                else:
+                    # Fallback: use subprocess to set empty input region via xdotool
+                    import subprocess
+                    xid = window.get_xid()
+                    subprocess.run(
+                        ['xprop', '-id', str(xid), '-format', '_NET_WM_STATE', '32a',
+                         '-set', '_NET_WM_STATE', '_NET_WM_STATE_SKIP_TASKBAR'],
+                        capture_output=True
+                    )
         except Exception as e:
             print(f"[overlay] Click-through setup failed: {e}", file=sys.stderr)
 

@@ -480,14 +480,11 @@ def accessibility_tree(pid: Optional[int] = None, max_depth: int = 3):
     args.extend(["--depth", str(max_depth)])
 
     result = run_cmd(args, timeout=15)
-    if result and result.returncode == 0:
-        try:
-            data = json.loads(result.stdout)
-            json_success(data)
-        except:
-            json_error(f"Failed to parse accessibility tree: {result.stdout[:200]}")
-    else:
-        _accessibility_tree_fallback(pid, max_depth)
+    if result and result.returncode == 0 and result.stdout.strip():
+        # Forward atspi_helper's JSON output directly to avoid double-serialization
+        print(result.stdout.strip())
+        return
+    _accessibility_tree_fallback(pid, max_depth)
 
 def _accessibility_tree_fallback(pid: Optional[int], max_depth: int):
     """Fallback accessibility tree using xprop and xwininfo."""
@@ -535,13 +532,10 @@ def accessibility_element_at(x: int, y: int):
 
     if os.path.exists(script):
         result = run_cmd(["python3", script, "element_at", str(x), str(y)], timeout=10)
-        if result and result.returncode == 0:
-            try:
-                data = json.loads(result.stdout)
-                json_success(data)
-                return
-            except:
-                pass
+        if result and result.returncode == 0 and result.stdout.strip():
+            # Forward atspi_helper's JSON output directly
+            print(result.stdout.strip())
+            return
 
     # Fallback
     wid = run_cmd_output(["xdotool", "getmouselocation", "--shell"])
@@ -570,13 +564,9 @@ def accessibility_click(role: str, title: str = "", pid: Optional[int] = None):
             args.extend(["--pid", str(pid)])
 
         result = run_cmd(args, timeout=10)
-        if result and result.returncode == 0:
-            try:
-                data = json.loads(result.stdout)
-                json_success(data)
-                return
-            except:
-                pass
+        if result and result.returncode == 0 and result.stdout.strip():
+            print(result.stdout.strip())
+            return
 
     json_error("Accessibility click requires python3-atspi2. Use mouse_click as fallback.")
 
@@ -614,6 +604,56 @@ def focused_position():
             return
 
     json_error("Could not determine focused element position")
+
+def accessibility_find(query: str):
+    """Find UI elements matching a natural language query by searching the accessibility tree."""
+    script = os.path.join(os.path.dirname(__file__), "atspi_helper.py")
+
+    if not os.path.exists(script):
+        json_error("accessibility find requires atspi_helper.py")
+        return
+
+    # Get the full accessibility tree
+    result = run_cmd(["python3", script, "tree", "--depth", "5"], timeout=15)
+    if not result or result.returncode != 0 or not result.stdout.strip():
+        json_error("Failed to get accessibility tree for search")
+        return
+
+    try:
+        tree_data = json.loads(result.stdout)
+    except:
+        json_error("Failed to parse accessibility tree")
+        return
+
+    query_lower = query.lower()
+    matches = []
+
+    def search_node(node, depth=0):
+        if not isinstance(node, dict):
+            return
+        title = node.get("title", "")
+        role = node.get("role", "")
+        desc = node.get("description", "")
+        searchable = f"{title} {role} {desc}".lower()
+        if query_lower in searchable:
+            match = {"role": role, "title": title, "description": desc}
+            if "position" in node:
+                match["position"] = node["position"]
+            if "size" in node:
+                match["size"] = node["size"]
+            matches.append(match)
+        for child in node.get("children", []):
+            search_node(child, depth + 1)
+
+    tree = tree_data.get("tree", tree_data)
+    search_node(tree)
+
+    json_success({
+        "action": "accessibility_find",
+        "query": query,
+        "matches": matches,
+        "count": len(matches)
+    })
 
 # ─── Screenshot ─────────────────────────────────────────────────────────
 
@@ -842,6 +882,9 @@ def main():
                 title = args[1] if len(args) > 1 else ""
                 pid = int(args[2]) if len(args) > 2 and args[2] else None
                 accessibility_click(role, title, pid)
+            elif subcommand == "find":
+                query = args[0] if args else ""
+                accessibility_find(query)
             elif subcommand == "focused-position":
                 focused_position()
             else:
