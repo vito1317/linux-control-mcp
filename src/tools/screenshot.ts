@@ -96,42 +96,7 @@ async function captureScreenshot(region?: Rect): Promise<Buffer> {
 
 export const screenshotToolDefinition = {
   description: 'Take a screenshot of the entire screen or a specific region',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      region: {
-        type: 'object' as const,
-        properties: {
-          x: { type: 'number' as const },
-          y: { type: 'number' as const },
-          width: { type: 'number' as const },
-          height: { type: 'number' as const },
-        },
-        description: 'Capture specific region (x, y, width, height)',
-      },
-      showGrid: {
-        type: 'boolean' as const,
-        description: 'Overlay coordinate grid',
-      },
-      gridSpacing: {
-        type: 'number' as const,
-        description: 'Grid line spacing in pixels',
-      },
-      quality: {
-        type: 'number' as const,
-        description: 'Image quality (1-100)',
-      },
-      format: {
-        type: 'string' as const,
-        enum: ['png', 'jpeg'],
-        description: 'Output format',
-      },
-      maxWidth: {
-        type: 'number' as const,
-        description: 'Max width for AI optimization',
-      },
-    },
-  },
+  schema: ScreenshotSchema,
   handler: async (input: z.infer<typeof ScreenshotSchema>) => {
     try {
       // Capture the screenshot
@@ -175,44 +140,7 @@ export const screenshotToolDefinition = {
 
 export const screenshotAnnotatedToolDefinition = {
   description: 'Take a screenshot and annotate specific points with labels',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      points: {
-        type: 'array' as const,
-        items: {
-          type: 'object' as const,
-          properties: {
-            x: { type: 'number' as const },
-            y: { type: 'number' as const },
-            label: { type: 'string' as const },
-            color: { type: 'string' as const },
-          },
-          required: ['x', 'y'],
-        },
-        description: 'Points to annotate',
-      },
-      region: {
-        type: 'object' as const,
-        properties: {
-          x: { type: 'number' as const },
-          y: { type: 'number' as const },
-          width: { type: 'number' as const },
-          height: { type: 'number' as const },
-        },
-        description: 'Capture specific region',
-      },
-      quality: {
-        type: 'number' as const,
-        description: 'Image quality',
-      },
-      maxWidth: {
-        type: 'number' as const,
-        description: 'Max width for optimization',
-      },
-    },
-    required: ['points'],
-  },
+  schema: ScreenshotAnnotatedSchema,
   handler: async (input: z.infer<typeof ScreenshotAnnotatedSchema>) => {
     try {
       // Capture screenshot
@@ -252,11 +180,7 @@ export const screenshotAnnotatedToolDefinition = {
 
 export const screenInfoToolDefinition = {
   description: 'Get information about all connected displays/screens',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {},
-    required: [],
-  },
+  schema: ScreenInfoSchema,
   handler: async () => {
     return execPython('screen', 'info');
   },

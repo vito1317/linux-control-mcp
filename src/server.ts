@@ -4,6 +4,7 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
 
 // Import all tool definitions
 import { mouseMoveToolDefinition, mouseClickToolDefinition, mouseDragToolDefinition, mouseScrollToolDefinition, mousePositionToolDefinition } from './tools/mouse.js';
@@ -20,8 +21,15 @@ const server = new McpServer({
   version: '1.0.0',
 });
 
+// Tool definition type with Zod schema
+interface ToolDef {
+  description: string;
+  schema: z.ZodObject<any>;
+  handler: (args: any) => Promise<any>;
+}
+
 // Collect all tools into a flat map
-const allTools: Record<string, { description: string; inputSchema: any; handler: (args: any) => Promise<any> }> = {
+const allTools: Record<string, ToolDef> = {
   // Mouse tools
   mouse_move: mouseMoveToolDefinition,
   mouse_click: mouseClickToolDefinition,
@@ -74,12 +82,12 @@ const allTools: Record<string, { description: string; inputSchema: any; handler:
   animation_scroll: animationScrollToolDefinition,
 };
 
-// Register all tools with the MCP server
+// Register all tools with the MCP server using Zod schemas
 for (const [name, tool] of Object.entries(allTools)) {
   server.tool(
     name,
     tool.description,
-    tool.inputSchema?.properties ? tool.inputSchema : {},
+    tool.schema.shape,
     async (args: any) => {
       try {
         const result = await tool.handler(args);

@@ -29,11 +29,7 @@ const AccessibilityClickSchema = z.object({
 
 export const accessibilityCheckToolDefinition = {
   description: 'Check if Accessibility permissions are granted',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {},
-    required: [],
-  },
+  schema: AccessibilityCheckSchema,
   handler: async () => {
     return execPython('accessibility', 'check');
   },
@@ -41,19 +37,7 @@ export const accessibilityCheckToolDefinition = {
 
 export const accessibilityTreeToolDefinition = {
   description: 'Get the accessibility tree of the frontmost application',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      maxDepth: {
-        type: 'number' as const,
-        description: 'Maximum depth of the tree (1=shallow, 10=deep)',
-      },
-      interactive: {
-        type: 'boolean' as const,
-        description: 'Only return interactive elements',
-      },
-    },
-  },
+  schema: AccessibilityTreeSchema,
   handler: async (input: z.infer<typeof AccessibilityTreeSchema>) => {
     return execPython(
       'accessibility',
@@ -68,20 +52,7 @@ export const accessibilityTreeToolDefinition = {
 
 export const accessibilityElementAtToolDefinition = {
   description: 'Get the UI element at a specific screen coordinate',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      x: {
-        type: 'number' as const,
-        description: 'X coordinate on screen',
-      },
-      y: {
-        type: 'number' as const,
-        description: 'Y coordinate on screen',
-      },
-    },
-    required: ['x', 'y'],
-  },
+  schema: AccessibilityElementAtSchema,
   handler: async (input: z.infer<typeof AccessibilityElementAtSchema>) => {
     return execPython('accessibility', 'element-at', String(input.x), String(input.y));
   },
@@ -89,20 +60,7 @@ export const accessibilityElementAtToolDefinition = {
 
 export const accessibilityClickToolDefinition = {
   description: 'Click a UI element by its accessibility role and optional title',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      role: {
-        type: 'string' as const,
-        description: 'Accessibility role (e.g., AXButton, AXMenuItem, AXTextField)',
-      },
-      title: {
-        type: 'string' as const,
-        description: 'Element title to match (partial, case-insensitive)',
-      },
-    },
-    required: ['role'],
-  },
+  schema: AccessibilityClickSchema,
   handler: async (input: z.infer<typeof AccessibilityClickSchema>) => {
     const args = [input.role];
     if (input.title) {

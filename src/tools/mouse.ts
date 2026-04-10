@@ -78,20 +78,7 @@ const MousePositionSchema = z.object({});
 
 export const mouseMoveToolDefinition = {
   description: 'Move the mouse cursor to specified screen coordinates',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      x: {
-        type: 'number' as const,
-        description: 'X coordinate (pixels from left)',
-      },
-      y: {
-        type: 'number' as const,
-        description: 'Y coordinate (pixels from top)',
-      },
-    },
-    required: ['x', 'y'],
-  },
+  schema: MouseMoveSchema,
   handler: async (input: z.infer<typeof MouseMoveSchema>) => {
     const result = await execPython('mouse', 'move', String(input.x), String(input.y));
 
@@ -109,29 +96,7 @@ export const mouseMoveToolDefinition = {
 
 export const mouseClickToolDefinition = {
   description: 'Click the mouse at specified coordinates',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      x: {
-        type: 'number' as const,
-        description: 'X coordinate',
-      },
-      y: {
-        type: 'number' as const,
-        description: 'Y coordinate',
-      },
-      button: {
-        type: 'string' as const,
-        enum: ['left', 'right', 'middle'],
-        description: 'Mouse button',
-      },
-      clicks: {
-        type: 'number' as const,
-        description: 'Number of clicks (1-3)',
-      },
-    },
-    required: ['x', 'y'],
-  },
+  schema: MouseClickSchema,
   handler: async (input: z.infer<typeof MouseClickSchema>) => {
     // Get current position first (if available)
     const currentPosResult = await execPython('mouse', 'position');
@@ -161,32 +126,7 @@ export const mouseClickToolDefinition = {
 
 export const mouseDragToolDefinition = {
   description: 'Drag the mouse from one position to another',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      fromX: {
-        type: 'number' as const,
-        description: 'Start X coordinate',
-      },
-      fromY: {
-        type: 'number' as const,
-        description: 'Start Y coordinate',
-      },
-      toX: {
-        type: 'number' as const,
-        description: 'End X coordinate',
-      },
-      toY: {
-        type: 'number' as const,
-        description: 'End Y coordinate',
-      },
-      duration: {
-        type: 'number' as const,
-        description: 'Duration in seconds',
-      },
-    },
-    required: ['fromX', 'fromY', 'toX', 'toY'],
-  },
+  schema: MouseDragSchema,
   handler: async (input: z.infer<typeof MouseDragSchema>) => {
     // Show drag trail animation
     const trailPoints = generateTrailPoints(
@@ -215,28 +155,7 @@ export const mouseDragToolDefinition = {
 
 export const mouseScrollToolDefinition = {
   description: 'Scroll at specified coordinates',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      x: {
-        type: 'number' as const,
-        description: 'X coordinate to scroll at',
-      },
-      y: {
-        type: 'number' as const,
-        description: 'Y coordinate to scroll at',
-      },
-      deltaY: {
-        type: 'number' as const,
-        description: 'Vertical scroll amount (positive=down, negative=up)',
-      },
-      deltaX: {
-        type: 'number' as const,
-        description: 'Horizontal scroll amount',
-      },
-    },
-    required: ['x', 'y', 'deltaY'],
-  },
+  schema: MouseScrollSchema,
   handler: async (input: z.infer<typeof MouseScrollSchema>) => {
     // Show scroll indicator
     const direction = input.deltaY > 0 ? 'down' : 'up';
@@ -258,11 +177,7 @@ export const mouseScrollToolDefinition = {
 
 export const mousePositionToolDefinition = {
   description: 'Get the current mouse cursor position',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {},
-    required: [],
-  },
+  schema: MousePositionSchema,
   handler: async () => {
     return execPython('mouse', 'position');
   },

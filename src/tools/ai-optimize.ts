@@ -52,33 +52,13 @@ const ClipboardWriteSchema = z.object({
 
 export const aiScreenContextToolDefinition = {
   description: 'Capture comprehensive snapshot of current screen state for AI analysis',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      gridSpacing: {
-        type: 'number' as const,
-        description: 'Coordinate grid spacing in pixels',
-      },
-      includeAccessibility: {
-        type: 'boolean' as const,
-        description: 'Include accessibility tree',
-      },
-      includeScreenshot: {
-        type: 'boolean' as const,
-        description: 'Include screenshot image',
-      },
-      maxWidth: {
-        type: 'number' as const,
-        description: 'Max screenshot width',
-      },
-    },
-  },
+  schema: AIScreenContextSchema,
   handler: async (input: z.infer<typeof AIScreenContextSchema>) => {
     try {
       const tempDir = os.tmpdir();
       const tempFile = path.join(tempDir, `ai-context-${Date.now()}.png`);
 
-      const result = await execPython('screenshot', 'capture', '--output', tempFile);
+      const result = await execPython('screen', 'screenshot', tempFile);
 
       if (!result.success) {
         return {
@@ -90,17 +70,17 @@ export const aiScreenContextToolDefinition = {
       let screenshot: string | undefined;
 
       if (input.includeScreenshot) {
-        let imageBuffer = await fs.readFile(tempFile);
+        let imageBuffer: Buffer = await fs.readFile(tempFile);
 
         // Add grid if requested
-        imageBuffer = await addCoordinateGrid(imageBuffer, {
+        imageBuffer = Buffer.from(await addCoordinateGrid(imageBuffer, {
           spacing: input.gridSpacing,
-        });
+        }));
 
         // Optimize for AI
-        imageBuffer = await optimizeForAI(imageBuffer, {
+        imageBuffer = Buffer.from(await optimizeForAI(imageBuffer, {
           maxWidth: input.maxWidth,
-        });
+        }));
 
         screenshot = imageBuffer.toString('base64');
 
@@ -146,17 +126,7 @@ export const aiScreenContextToolDefinition = {
 
 export const aiFindElementToolDefinition = {
   description: 'Find a UI element by natural language description',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      query: {
-        type: 'string' as const,
-        description:
-          'Natural language description of the element (e.g., "the Save button", "search text field")',
-      },
-    },
-    required: ['query'],
-  },
+  schema: AIFindElementSchema,
   handler: async (input: z.infer<typeof AIFindElementSchema>) => {
     return execPython('accessibility', 'find', input.query);
   },
@@ -164,28 +134,7 @@ export const aiFindElementToolDefinition = {
 
 export const aiOCRRegionToolDefinition = {
   description: 'Extract text from a screen region using OCR',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      x: {
-        type: 'number' as const,
-        description: 'Region X coordinate',
-      },
-      y: {
-        type: 'number' as const,
-        description: 'Region Y coordinate',
-      },
-      width: {
-        type: 'number' as const,
-        description: 'Region width',
-      },
-      height: {
-        type: 'number' as const,
-        description: 'Region height',
-      },
-    },
-    required: ['x', 'y', 'width', 'height'],
-  },
+  schema: AIOCRRegionSchema,
   handler: async (input: z.infer<typeof AIOCRRegionSchema>) => {
     return execPython(
       'ocr',
@@ -200,22 +149,14 @@ export const aiOCRRegionToolDefinition = {
 
 export const aiScreenElementsToolDefinition = {
   description: 'Scan all interactive elements on screen with auto-detected annotations',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      maxWidth: {
-        type: 'number' as const,
-        description: 'Max screenshot width',
-      },
-    },
-  },
+  schema: AIScreenElementsSchema,
   handler: async (input: z.infer<typeof AIScreenElementsSchema>) => {
     try {
       const tempDir = os.tmpdir();
       const tempFile = path.join(tempDir, `ai-elements-${Date.now()}.png`);
 
       // Capture screenshot
-      const captureResult = await execPython('screenshot', 'capture', '--output', tempFile);
+      const captureResult = await execPython('screen', 'screenshot', tempFile);
 
       if (!captureResult.success) {
         return {
@@ -233,10 +174,10 @@ export const aiScreenElementsToolDefinition = {
       }
 
       // Annotate image with elements
-      let imageBuffer = await fs.readFile(tempFile);
+      let imageBuffer: Buffer = await fs.readFile(tempFile);
 
       const elements = (elementsResult.data as Array<{ x: number; y: number; label?: string }>) || [];
-      imageBuffer = await annotatePoints(
+      imageBuffer = Buffer.from(await annotatePoints(
         imageBuffer,
         elements.map((el, idx) => ({
           x: el.x,
@@ -244,12 +185,12 @@ export const aiScreenElementsToolDefinition = {
           label: String(idx + 1),
           color: '#007AFF',
         }))
-      );
+      ));
 
       // Optimize
-      imageBuffer = await optimizeForAI(imageBuffer, {
+      imageBuffer = Buffer.from(await optimizeForAI(imageBuffer, {
         maxWidth: input.maxWidth,
-      });
+      }));
 
       const screenshot = imageBuffer.toString('base64');
 
@@ -276,11 +217,7 @@ export const aiScreenElementsToolDefinition = {
 
 export const clipboardReadToolDefinition = {
   description: 'Read the current text content from the clipboard',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {},
-    required: [],
-  },
+  schema: ClipboardReadSchema,
   handler: async () => {
     return execPython('clipboard', 'read');
   },
@@ -288,16 +225,7 @@ export const clipboardReadToolDefinition = {
 
 export const clipboardWriteToolDefinition = {
   description: 'Write text content to the clipboard',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      text: {
-        type: 'string' as const,
-        description: 'Text to copy to clipboard',
-      },
-    },
-    required: ['text'],
-  },
+  schema: ClipboardWriteSchema,
   handler: async (input: z.infer<typeof ClipboardWriteSchema>) => {
     return execPython('clipboard', 'write', input.text);
   },

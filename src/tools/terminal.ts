@@ -31,42 +31,16 @@ const TerminalScriptSchema = z.object({
 
 export const terminalExecuteToolDefinition = {
   description: 'Execute a shell command and wait for completion',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      command: {
-        type: 'string' as const,
-        description: 'Shell command to execute',
-      },
-      cwd: {
-        type: 'string' as const,
-        description: 'Working directory (defaults to home directory)',
-      },
-      shell: {
-        type: 'string' as const,
-        description: 'Shell to use (default: /bin/bash)',
-      },
-      timeout: {
-        type: 'number' as const,
-        description: 'Timeout in milliseconds',
-      },
-      env: {
-        type: 'object' as const,
-        additionalProperties: { type: 'string' as const },
-        description: 'Additional environment variables',
-      },
-    },
-    required: ['command'],
-  },
+  schema: TerminalExecuteSchema,
   handler: async (input: z.infer<typeof TerminalExecuteSchema>) => {
     const args = [
       input.command,
       '--cwd',
       input.cwd || process.env.HOME || '/tmp',
       '--shell',
-      input.shell,
+      input.shell || '/bin/bash',
       '--timeout',
-      String(input.timeout),
+      String(input.timeout || 30000),
     ];
 
     if (input.env && Object.keys(input.env).length > 0) {
@@ -82,20 +56,7 @@ export const terminalExecuteToolDefinition = {
 
 export const terminalExecuteBackgroundToolDefinition = {
   description: 'Start a long-running process in the background',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      command: {
-        type: 'string' as const,
-        description: 'Command to run in background',
-      },
-      cwd: {
-        type: 'string' as const,
-        description: 'Working directory',
-      },
-    },
-    required: ['command'],
-  },
+  schema: TerminalExecuteBackgroundSchema,
   handler: async (input: z.infer<typeof TerminalExecuteBackgroundSchema>) => {
     const args = [input.command];
 
@@ -112,35 +73,14 @@ export const terminalExecuteBackgroundToolDefinition = {
 
 export const terminalScriptToolDefinition = {
   description: 'Execute a bash/sh script (Linux equivalent of AppleScript)',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      command: {
-        type: 'string' as const,
-        description: 'Shell command or script to execute',
-      },
-      cwd: {
-        type: 'string' as const,
-        description: 'Working directory',
-      },
-      shell: {
-        type: 'string' as const,
-        description: 'Shell to use',
-      },
-      timeout: {
-        type: 'number' as const,
-        description: 'Timeout in milliseconds',
-      },
-    },
-    required: ['command'],
-  },
+  schema: TerminalScriptSchema,
   handler: async (input: z.infer<typeof TerminalScriptSchema>) => {
     const args = [
       input.command,
       '--shell',
-      input.shell,
+      input.shell || '/bin/bash',
       '--timeout',
-      String(input.timeout),
+      String(input.timeout || 30000),
     ];
 
     if (input.cwd) {

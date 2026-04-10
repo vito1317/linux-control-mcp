@@ -41,16 +41,7 @@ async function getCaretPosition(): Promise<Point | null> {
 
 export const keyboardTypeToolDefinition = {
   description: 'Type a string of text character by character, simulating real keyboard input',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      text: {
-        type: 'string' as const,
-        description: 'Text to type',
-      },
-    },
-    required: ['text'],
-  },
+  schema: KeyboardTypeSchema,
   handler: async (input: z.infer<typeof KeyboardTypeSchema>) => {
     // Try to get caret position for animation
     const caretPos = await getCaretPosition();
@@ -69,24 +60,7 @@ export const keyboardTypeToolDefinition = {
 
 export const keyboardPressToolDefinition = {
   description: 'Press a key with optional modifier keys',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      key: {
-        type: 'string' as const,
-        description: 'Key name (a-z, 0-9, return, tab, space, up, down, left, right, f1-f12, delete, backspace, etc)',
-      },
-      modifiers: {
-        type: 'array' as const,
-        items: {
-          type: 'string' as const,
-          enum: ['cmd', 'shift', 'alt', 'ctrl', 'fn'],
-        },
-        description: 'Modifier keys',
-      },
-    },
-    required: ['key'],
-  },
+  schema: KeyboardPressSchema,
   handler: async (input: z.infer<typeof KeyboardPressSchema>) => {
     const args = [input.key];
     if (input.modifiers && input.modifiers.length > 0) {
@@ -101,16 +75,7 @@ export const keyboardPressToolDefinition = {
 
 export const keyboardHotkeyToolDefinition = {
   description: 'Press a keyboard shortcut / hotkey combination',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      keys: {
-        type: 'string' as const,
-        description: 'Hotkey combination with + separator (e.g., cmd+c, ctrl+shift+z)',
-      },
-    },
-    required: ['keys'],
-  },
+  schema: KeyboardHotkeySchema,
   handler: async (input: z.infer<typeof KeyboardHotkeySchema>) => {
     // Try to get caret position for visual feedback
     const caretPos = await getCaretPosition();

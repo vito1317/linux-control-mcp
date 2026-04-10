@@ -32,11 +32,7 @@ const AppsListSchema = z.object({});
 
 export const windowListToolDefinition = {
   description: 'List all visible windows on screen',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {},
-    required: [],
-  },
+  schema: WindowListSchema,
   handler: async () => {
     return execPython('window', 'list');
   },
@@ -44,16 +40,7 @@ export const windowListToolDefinition = {
 
 export const windowFocusToolDefinition = {
   description: 'Bring an application to the foreground and focus it',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      appName: {
-        type: 'string' as const,
-        description: 'Application name (e.g., Safari, Terminal, VS Code)',
-      },
-    },
-    required: ['appName'],
-  },
+  schema: WindowFocusSchema,
   handler: async (input: z.infer<typeof WindowFocusSchema>) => {
     return execPython('window', 'focus', input.appName);
   },
@@ -61,32 +48,7 @@ export const windowFocusToolDefinition = {
 
 export const windowResizeToolDefinition = {
   description: 'Move and resize an application window',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      appName: {
-        type: 'string' as const,
-        description: 'Application name',
-      },
-      x: {
-        type: 'number' as const,
-        description: 'New X position',
-      },
-      y: {
-        type: 'number' as const,
-        description: 'New Y position',
-      },
-      width: {
-        type: 'number' as const,
-        description: 'New width',
-      },
-      height: {
-        type: 'number' as const,
-        description: 'New height',
-      },
-    },
-    required: ['appName', 'x', 'y', 'width', 'height'],
-  },
+  schema: WindowResizeSchema,
   handler: async (input: z.infer<typeof WindowResizeSchema>) => {
     return execPython(
       'window',
@@ -102,16 +64,7 @@ export const windowResizeToolDefinition = {
 
 export const windowMinimizeToolDefinition = {
   description: 'Minimize the front window of an application',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      appName: {
-        type: 'string' as const,
-        description: 'Application name',
-      },
-    },
-    required: ['appName'],
-  },
+  schema: WindowMinimizeSchema,
   handler: async (input: z.infer<typeof WindowMinimizeSchema>) => {
     return execPython('window', 'minimize', input.appName);
   },
@@ -119,16 +72,7 @@ export const windowMinimizeToolDefinition = {
 
 export const windowCloseToolDefinition = {
   description: 'Close the front window of an application',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      appName: {
-        type: 'string' as const,
-        description: 'Application name',
-      },
-    },
-    required: ['appName'],
-  },
+  schema: WindowCloseSchema,
   handler: async (input: z.infer<typeof WindowCloseSchema>) => {
     return execPython('window', 'close', input.appName);
   },
@@ -136,11 +80,7 @@ export const windowCloseToolDefinition = {
 
 export const appsListToolDefinition = {
   description: 'List all running applications with their name, PID, and status',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {},
-    required: [],
-  },
+  schema: AppsListSchema,
   handler: async () => {
     return execPython('apps', 'list');
   },
