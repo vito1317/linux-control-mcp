@@ -62,7 +62,12 @@ export async function ensureOverlay(): Promise<void> {
     const overlayPath = findOverlayScript();
     overlayProcess = spawn('python3', [overlayPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0' },
+      env: {
+        ...process.env,
+        DISPLAY: process.env.DISPLAY || ':0',
+        WAYLAND_DISPLAY: process.env.WAYLAND_DISPLAY || '',
+        XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR || '',
+      },
     });
 
     overlayProcess.on('error', (err) => {
@@ -73,6 +78,10 @@ export async function ensureOverlay(): Promise<void> {
     overlayProcess.on('exit', (code) => {
       console.error(`Overlay process exited with code ${code}`);
       overlayProcess = null;
+    });
+
+    overlayProcess.stderr?.on('data', (data) => {
+      console.error(`[Overlay stderr] ${data.toString().trim()}`);
     });
 
     overlayProcess.stdout?.on('data', (data) => {
@@ -90,8 +99,23 @@ export async function ensureOverlay(): Promise<void> {
       }
     });
 
-    // Give the process time to start
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Give the process time to start and become READY
+    await new Promise<void>((resolve) => {
+      const readyTimeout = setTimeout(() => {
+        console.error('[Overlay] Timed out waiting for READY signal');
+        resolve();
+      }, 3000);
+
+      const checkReady = () => {
+        if (!isInitializing) {
+          clearTimeout(readyTimeout);
+          resolve();
+        } else {
+          setTimeout(checkReady, 100);
+        }
+      };
+      setTimeout(checkReady, 200);
+    });
   } catch (error) {
     console.error('Failed to start overlay process:', error);
     overlayProcess = null;
