@@ -42,10 +42,8 @@ export const accessibilityTreeToolDefinition = {
     return execPython(
       'accessibility',
       'tree',
-      '--max-depth',
-      String(input.maxDepth),
-      '--interactive',
-      String(input.interactive)
+      '',
+      String(input.maxDepth ?? 3)
     );
   },
 };

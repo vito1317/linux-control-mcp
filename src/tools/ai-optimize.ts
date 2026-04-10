@@ -91,7 +91,7 @@ export const aiScreenContextToolDefinition = {
       // Get accessibility tree
       let accessibility = undefined;
       if (input.includeAccessibility) {
-        const a11yResult = await execPython('accessibility', 'tree', '--max-depth', '3');
+        const a11yResult = await execPython('accessibility', 'tree', '', '3');
         if (a11yResult.success) {
           accessibility = a11yResult.data;
         }
@@ -137,8 +137,8 @@ export const aiOCRRegionToolDefinition = {
   schema: AIOCRRegionSchema,
   handler: async (input: z.infer<typeof AIOCRRegionSchema>) => {
     return execPython(
+      'screen',
       'ocr',
-      'region',
       String(input.x),
       String(input.y),
       String(input.width),

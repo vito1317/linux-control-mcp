@@ -99,9 +99,9 @@ export const mouseClickToolDefinition = {
   schema: MouseClickSchema,
   handler: async (input: z.infer<typeof MouseClickSchema>) => {
     // Get current position first (if available)
-    const currentPosResult = await execPython('mouse', 'position');
+    const currentPosResult = await execPython('mouse', 'position') as any;
     const currentPos = currentPosResult.success
-      ? (currentPosResult.data as Point)
+      ? { x: currentPosResult.x as number, y: currentPosResult.y as number }
       : { x: input.x, y: input.y };
 
     // Show trail animation from current position to target

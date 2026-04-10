@@ -52,7 +52,7 @@ def run_cmd_output(cmd: list[str], timeout: int = 10) -> str:
 
 def mouse_move(x: int, y: int):
     """Move mouse to absolute position."""
-    run_cmd(["xdotool", "mousemove", "--sync", str(x), str(y)])
+    run_cmd(["xdotool", "mousemove", str(x), str(y)])
     json_success({"action": "mouse_move", "x": x, "y": y})
 
 def mouse_click(x: int, y: int, button: str = "left", clicks: int = 1):
@@ -61,7 +61,7 @@ def mouse_click(x: int, y: int, button: str = "left", clicks: int = 1):
     btn = button_map.get(button, "1")
 
     # Move to position first
-    run_cmd(["xdotool", "mousemove", "--sync", str(x), str(y)])
+    run_cmd(["xdotool", "mousemove", str(x), str(y)])
 
     # Perform click(s)
     for _ in range(clicks):
@@ -103,7 +103,7 @@ def mouse_drag(from_x: int, from_y: int, to_x: int, to_y: int, duration: float =
 
 def mouse_scroll(x: int, y: int, delta_x: int = 0, delta_y: int = 0):
     """Scroll at position. delta_y: positive=up, negative=down."""
-    run_cmd(["xdotool", "mousemove", "--sync", str(x), str(y)])
+    run_cmd(["xdotool", "mousemove", str(x), str(y)])
 
     if delta_y != 0:
         # xdotool: button 4=scroll up, 5=scroll down
@@ -768,6 +768,65 @@ def main():
                 clipboard_write(args[0] if args else "")
             else:
                 json_error(f"Unknown clipboard subcommand: {subcommand}")
+
+        elif command == "terminal":
+            if subcommand == "execute" or subcommand == "script":
+                cmd_str = args[0] if args else ""
+                cwd = None
+                shell = "/bin/bash"
+                timeout_ms = 30000
+                env_vars = {}
+                i = 1
+                while i < len(args):
+                    if args[i] == "--cwd" and i + 1 < len(args):
+                        cwd = args[i + 1]; i += 2
+                    elif args[i] == "--shell" and i + 1 < len(args):
+                        shell = args[i + 1]; i += 2
+                    elif args[i] == "--timeout" and i + 1 < len(args):
+                        timeout_ms = int(args[i + 1]); i += 2
+                    elif args[i] == "--env" and i + 1 < len(args):
+                        env_vars = json.loads(args[i + 1]); i += 2
+                    else:
+                        i += 1
+                env = os.environ.copy()
+                env.update(env_vars)
+                try:
+                    result = subprocess.run(
+                        cmd_str, shell=True, executable=shell,
+                        capture_output=True, text=True,
+                        cwd=cwd, env=env,
+                        timeout=timeout_ms / 1000
+                    )
+                    json_success({
+                        "action": "terminal_execute",
+                        "command": cmd_str,
+                        "stdout": result.stdout,
+                        "stderr": result.stderr,
+                        "exitCode": result.returncode
+                    })
+                except subprocess.TimeoutExpired:
+                    json_error(f"Command timed out after {timeout_ms}ms: {cmd_str}")
+            elif subcommand == "background":
+                cmd_str = args[0] if args else ""
+                cwd = None
+                i = 1
+                while i < len(args):
+                    if args[i] == "--cwd" and i + 1 < len(args):
+                        cwd = args[i + 1]; i += 2
+                    else:
+                        i += 1
+                proc = subprocess.Popen(
+                    cmd_str, shell=True,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    cwd=cwd
+                )
+                json_success({
+                    "action": "terminal_background",
+                    "command": cmd_str,
+                    "pid": proc.pid
+                })
+            else:
+                json_error(f"Unknown terminal subcommand: {subcommand}")
 
         elif command == "accessibility":
             if subcommand == "check":
