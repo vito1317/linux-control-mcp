@@ -43,12 +43,16 @@ export const keyboardTypeToolDefinition = {
   description: 'Type a string of text character by character, simulating real keyboard input',
   schema: KeyboardTypeSchema,
   handler: async (input: z.infer<typeof KeyboardTypeSchema>) => {
-    // Try to get caret position for animation
-    const caretPos = await getCaretPosition();
-
-    if (caretPos) {
-      // Show typing animation at caret position
-      await showTypeAnimation(caretPos.x, caretPos.y, input.text).catch(() => {});
+    // Show typing animation - try caret position, fallback to mouse position
+    let animPos = await getCaretPosition();
+    if (!animPos) {
+      const posResult = await execPython('mouse', 'position') as any;
+      if (posResult.success) {
+        animPos = { x: posResult.x, y: posResult.y - 30 };
+      }
+    }
+    if (animPos) {
+      await showTypeAnimation(animPos.x, animPos.y, input.text).catch(() => {});
     }
 
     // Execute the typing

@@ -114,7 +114,7 @@ export const mouseClickToolDefinition = {
     // Show click ripple
     await showClickAnimation(input.x, input.y, {
       button: input.button,
-      duration: 0.3,
+      duration: 1.0,
     }).catch(() => {});
 
     // Execute the click
