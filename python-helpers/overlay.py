@@ -23,8 +23,8 @@ if 'DISPLAY' not in os.environ:
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gtk, Gdk, GLib
-import cairo as Cairo
+from gi.repository import Gtk, Gdk, GLib, cairo as Cairo
+import cairo as _pycairo
 
 
 class ClickStyle(Enum):

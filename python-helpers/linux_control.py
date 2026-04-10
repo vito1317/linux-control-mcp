@@ -732,7 +732,64 @@ def main():
     subcommand = sys.argv[2]
     args = sys.argv[3:]
 
+    # Detect Wayland session
+    is_wayland = os.environ.get("XDG_SESSION_TYPE") == "wayland" or os.environ.get("WAYLAND_DISPLAY")
+    wayland_helper = os.path.join(os.path.dirname(__file__), "wayland_input.py")
+    use_wayland = is_wayland and os.path.exists(wayland_helper)
+
     try:
+        # On Wayland, route keyboard/mouse input through wayland_input.py
+        if use_wayland and command == "keyboard":
+            if subcommand == "type":
+                result = run_cmd(["python3", wayland_helper, "type", args[0] if args else ""], timeout=15)
+                if result and result.stdout.strip():
+                    print(result.stdout.strip())
+                else:
+                    json_error("Wayland keyboard type failed")
+                return
+            elif subcommand == "press":
+                key = args[0] if args else ""
+                mods = args[1] if len(args) > 1 and args[1] else ""
+                result = run_cmd(["python3", wayland_helper, "press", key, mods], timeout=10)
+                if result and result.stdout.strip():
+                    print(result.stdout.strip())
+                else:
+                    json_error("Wayland keyboard press failed")
+                return
+            elif subcommand == "hotkey":
+                result = run_cmd(["python3", wayland_helper, "hotkey", args[0] if args else ""], timeout=10)
+                if result and result.stdout.strip():
+                    print(result.stdout.strip())
+                else:
+                    json_error("Wayland hotkey failed")
+                return
+
+        if use_wayland and command == "mouse":
+            if subcommand == "click":
+                x, y = int(args[0]), int(args[1])
+                button = args[2] if len(args) > 2 else "left"
+                clicks = int(args[3]) if len(args) > 3 else 1
+                # Move mouse with xdotool (still works for Xwayland position tracking)
+                run_cmd(["xdotool", "mousemove", str(x), str(y)])
+                time.sleep(0.05)
+                for _ in range(clicks):
+                    result = run_cmd(["python3", wayland_helper, "click", button], timeout=10)
+                    time.sleep(0.05)
+                json_success({"action": "mouse_click", "x": x, "y": y, "button": button, "clicks": clicks})
+                return
+            elif subcommand == "scroll":
+                x, y = int(args[0]), int(args[1])
+                dy = int(args[2]) if len(args) > 2 else 0
+                dx = int(args[3]) if len(args) > 3 else 0
+                run_cmd(["xdotool", "mousemove", str(x), str(y)])
+                time.sleep(0.05)
+                result = run_cmd(["python3", wayland_helper, "scroll", str(dy), str(dx)], timeout=10)
+                if result and result.stdout.strip():
+                    print(result.stdout.strip())
+                else:
+                    json_error("Wayland scroll failed")
+                return
+
         if command == "mouse":
             if subcommand == "move":
                 mouse_move(int(args[0]), int(args[1]))
