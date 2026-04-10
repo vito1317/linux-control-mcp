@@ -5,12 +5,8 @@
 
 import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { Point, OverlayMessage, AnimationOptions } from '../types/index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let overlayProcess: ChildProcess | null = null;
 let overlayQueue: OverlayMessage[] = [];
@@ -66,6 +62,7 @@ export async function ensureOverlay(): Promise<void> {
     const overlayPath = findOverlayScript();
     overlayProcess = spawn('python3', [overlayPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0' },
     });
 
     overlayProcess.on('error', (err) => {
