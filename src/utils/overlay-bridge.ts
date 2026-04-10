@@ -5,8 +5,12 @@
 
 import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { Point, OverlayMessage, AnimationOptions } from '../types/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let overlayProcess: ChildProcess | null = null;
 let overlayQueue: OverlayMessage[] = [];
