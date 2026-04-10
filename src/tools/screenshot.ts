@@ -62,7 +62,7 @@ const ScreenInfoSchema = z.object({});
 /**
  * Capture screenshot via python helper and process it
  */
-async function captureScreenshot(region?: Rect): Promise<Buffer> {
+async function captureScreenshot(region?: Rect): Promise<any> {
   // Use a temp file for exchange
   const tempDir = os.tmpdir();
   const tempFile = path.join(tempDir, `screenshot-${Date.now()}.png`);

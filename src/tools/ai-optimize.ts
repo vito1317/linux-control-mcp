@@ -70,17 +70,17 @@ export const aiScreenContextToolDefinition = {
       let screenshot: string | undefined;
 
       if (input.includeScreenshot) {
-        let imageBuffer: Buffer = await fs.readFile(tempFile);
+        let imageBuffer = await fs.readFile(tempFile) as any;
 
         // Add grid if requested
-        imageBuffer = Buffer.from(await addCoordinateGrid(imageBuffer, {
+        imageBuffer = await addCoordinateGrid(imageBuffer, {
           spacing: input.gridSpacing,
-        }));
+        });
 
         // Optimize for AI
-        imageBuffer = Buffer.from(await optimizeForAI(imageBuffer, {
+        imageBuffer = await optimizeForAI(imageBuffer, {
           maxWidth: input.maxWidth,
-        }));
+        });
 
         screenshot = imageBuffer.toString('base64');
 
@@ -174,10 +174,10 @@ export const aiScreenElementsToolDefinition = {
       }
 
       // Annotate image with elements
-      let imageBuffer: Buffer = await fs.readFile(tempFile);
+      let imageBuffer = await fs.readFile(tempFile) as any;
 
       const elements = (elementsResult.data as Array<{ x: number; y: number; label?: string }>) || [];
-      imageBuffer = Buffer.from(await annotatePoints(
+      imageBuffer = await annotatePoints(
         imageBuffer,
         elements.map((el, idx) => ({
           x: el.x,
@@ -185,12 +185,12 @@ export const aiScreenElementsToolDefinition = {
           label: String(idx + 1),
           color: '#007AFF',
         }))
-      ));
+      );
 
       // Optimize
-      imageBuffer = Buffer.from(await optimizeForAI(imageBuffer, {
+      imageBuffer = await optimizeForAI(imageBuffer, {
         maxWidth: input.maxWidth,
-      }));
+      });
 
       const screenshot = imageBuffer.toString('base64');
 

@@ -10,9 +10,9 @@ import { Rect, Point, CoordinateGridOptions, ImageProcessingOptions } from '../t
  * Add a coordinate grid overlay to an image using SVG
  */
 export async function addCoordinateGrid(
-  imageBuffer: Buffer,
+  imageBuffer: any,
   options?: CoordinateGridOptions
-): Promise<Buffer> {
+): Promise<any> {
   const spacing = options?.spacing || 100;
   const gridColor = options?.gridColor || 'rgba(128, 128, 128, 0.3)';
   const gridWidth = options?.gridWidth || 1;
@@ -58,9 +58,9 @@ export async function addCoordinateGrid(
  * Optimize image for AI consumption
  */
 export async function optimizeForAI(
-  imageBuffer: Buffer,
+  imageBuffer: any,
   options?: ImageProcessingOptions
-): Promise<Buffer> {
+): Promise<any> {
   const maxWidth = options?.maxWidth || 1280;
   const quality = options?.quality || 80;
 
@@ -79,7 +79,7 @@ export async function optimizeForAI(
 /**
  * Crop a region from an image
  */
-export async function cropRegion(imageBuffer: Buffer, region: Rect): Promise<Buffer> {
+export async function cropRegion(imageBuffer: any, region: Rect): Promise<any> {
   return sharp(imageBuffer)
     .extract({
       left: Math.round(region.x),
@@ -95,14 +95,14 @@ export async function cropRegion(imageBuffer: Buffer, region: Rect): Promise<Buf
  * Annotate image with point markers and labels
  */
 export async function annotatePoints(
-  imageBuffer: Buffer,
+  imageBuffer: any,
   points: Array<{
     x: number;
     y: number;
     label?: string;
     color?: string;
   }>
-): Promise<Buffer> {
+): Promise<any> {
   const image = sharp(imageBuffer);
   const metadata = await image.metadata();
 
@@ -166,14 +166,14 @@ function escapeXml(str: string): string {
 /**
  * Convert image to grayscale
  */
-export async function toGrayscale(imageBuffer: Buffer): Promise<Buffer> {
+export async function toGrayscale(imageBuffer: any): Promise<any> {
   return sharp(imageBuffer).grayscale().png().toBuffer();
 }
 
 /**
  * Apply blur to image
  */
-export async function applyBlur(imageBuffer: Buffer, radius: number = 5): Promise<Buffer> {
+export async function applyBlur(imageBuffer: any, radius: number = 5): Promise<any> {
   return sharp(imageBuffer).blur(radius).png().toBuffer();
 }
 
@@ -181,10 +181,10 @@ export async function applyBlur(imageBuffer: Buffer, radius: number = 5): Promis
  * Resize image maintaining aspect ratio
  */
 export async function resizeImage(
-  imageBuffer: Buffer,
+  imageBuffer: any,
   maxWidth: number,
   maxHeight?: number
-): Promise<Buffer> {
+): Promise<any> {
   return sharp(imageBuffer)
     .resize(maxWidth, maxHeight, {
       withoutEnlargement: true,
