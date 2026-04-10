@@ -84,47 +84,45 @@ sudo pacman -S xdotool wmctrl xorg-xrandr xclip maim \
   python-gobject gtk3 at-spi2-core tesseract
 ```
 
-## Setup
+## One-Click Install
 
 ```bash
-# Clone and install
-cd linux-control-mcp
-npm install
+curl -fsSL https://raw.githubusercontent.com/vito1317/linux-control-mcp/main/install.sh | bash
+```
 
-# Check dependencies and setup
-npm run setup
+This will automatically install dependencies, build the project, and register the MCP server.
 
-# Build TypeScript
-npm run build
+## Manual Install
+
+```bash
+# Clone
+git clone https://github.com/vito1317/linux-control-mcp.git ~/.local/share/linux-control-mcp
+cd ~/.local/share/linux-control-mcp
+
+# Install system dependencies (Ubuntu/Debian)
+sudo apt install xdotool wmctrl x11-utils xclip maim python3-gi gir1.2-gtk-3.0 gir1.2-atspi-2.0
+
+# Build
+npm install && npm run build
+
+# Register MCP
+claude mcp add linux-control -- node ~/.local/share/linux-control-mcp/dist/index.js
 ```
 
 ## Usage
 
-### With Claude Desktop
-
-Add to `~/.config/claude/claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "linux-control": {
-      "command": "node",
-      "args": ["/path/to/linux-control-mcp/dist/index.js"]
-    }
-  }
-}
-```
-
-### Standalone
-
 ```bash
-npm start
-```
+# Register
+claude mcp add linux-control -- node ~/.local/share/linux-control-mcp/dist/index.js
 
-### Development
+# Remove
+claude mcp remove linux-control
 
-```bash
-npm run dev
+# Update
+cd ~/.local/share/linux-control-mcp && git pull && npm run build
+
+# Uninstall
+claude mcp remove linux-control && rm -rf ~/.local/share/linux-control-mcp
 ```
 
 ## Tool Reference

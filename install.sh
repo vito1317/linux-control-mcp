@@ -1,8 +1,8 @@
 #!/bin/bash
 # ============================================================
-# Linux Control MCP - One-Click Installer
-# Installs all dependencies, builds project, and configures
-# Claude Desktop MCP integration automatically.
+# Linux Control MCP - Installer
+# Installs all dependencies, builds project, and registers
+# MCP server via `claude mcp add`.
 # ============================================================
 set -e
 
@@ -10,7 +10,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════╗"
@@ -130,57 +130,19 @@ build_project() {
     echo -e "${GREEN}[OK]${NC} Project built successfully"
 }
 
-# ─── Configure Claude Desktop ───────────────────────────────
-configure_claude() {
+# ─── Register MCP via claude mcp add ────────────────────────
+register_mcp() {
     echo ""
-    echo -e "${BLUE}[5/5] Configuring Claude Desktop MCP...${NC}"
+    echo -e "${BLUE}[5/5] Registering MCP server...${NC}"
 
-    CLAUDE_CONFIG_DIR="$HOME/.config/claude"
-    CLAUDE_CONFIG="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
-
-    mkdir -p "$CLAUDE_CONFIG_DIR"
-
-    if [ -f "$CLAUDE_CONFIG" ]; then
-        # Check if linux-control already configured
-        if grep -q "linux-control" "$CLAUDE_CONFIG" 2>/dev/null; then
-            echo -e "${YELLOW}[INFO]${NC} linux-control-mcp already configured in Claude Desktop"
-        else
-            # Add to existing config using python
-            python3 -c "
-import json, sys
-try:
-    with open('$CLAUDE_CONFIG', 'r') as f:
-        config = json.load(f)
-except:
-    config = {}
-
-if 'mcpServers' not in config:
-    config['mcpServers'] = {}
-
-config['mcpServers']['linux-control'] = {
-    'command': 'node',
-    'args': ['$INSTALL_DIR/dist/index.js']
-}
-
-with open('$CLAUDE_CONFIG', 'w') as f:
-    json.dump(config, f, indent=2)
-print('Config updated')
-"
-            echo -e "${GREEN}[OK]${NC} Added linux-control-mcp to Claude Desktop config"
-        fi
+    if command -v claude &> /dev/null; then
+        claude mcp add linux-control -- node "$INSTALL_DIR/dist/index.js" 2>&1
+        echo -e "${GREEN}[OK]${NC} MCP server registered via 'claude mcp add'"
     else
-        # Create new config
-        cat > "$CLAUDE_CONFIG" <<JSONEOF
-{
-  "mcpServers": {
-    "linux-control": {
-      "command": "node",
-      "args": ["$INSTALL_DIR/dist/index.js"]
-    }
-  }
-}
-JSONEOF
-        echo -e "${GREEN}[OK]${NC} Created Claude Desktop config with linux-control-mcp"
+        echo -e "${YELLOW}[WARN]${NC} 'claude' CLI not found. Please register manually:"
+        echo ""
+        echo -e "  ${BLUE}claude mcp add linux-control -- node $INSTALL_DIR/dist/index.js${NC}"
+        echo ""
     fi
 }
 
@@ -191,44 +153,37 @@ verify() {
     echo ""
 
     TOOLS=("xdotool" "wmctrl" "xrandr" "xclip" "maim" "tesseract" "python3" "node")
-    ALL_OK=true
 
     for tool in "${TOOLS[@]}"; do
         if command -v "$tool" &> /dev/null; then
             echo -e "  ${GREEN}✓${NC} $tool"
         else
             echo -e "  ${RED}✗${NC} $tool (missing)"
-            ALL_OK=false
         fi
     done
 
-    # Check Python GTK3
     if python3 -c "import gi; gi.require_version('Gtk', '3.0')" 2>/dev/null; then
         echo -e "  ${GREEN}✓${NC} GTK3 (Python)"
     else
         echo -e "  ${YELLOW}~${NC} GTK3 (Python) - overlay animations unavailable"
     fi
 
-    # Check AT-SPI2
     if python3 -c "import gi; gi.require_version('Atspi', '2.0')" 2>/dev/null; then
         echo -e "  ${GREEN}✓${NC} AT-SPI2 (Python)"
     else
         echo -e "  ${YELLOW}~${NC} AT-SPI2 (Python) - accessibility tree limited"
     fi
 
-    # Check build
     if [ -f "$INSTALL_DIR/dist/index.js" ]; then
         echo -e "  ${GREEN}✓${NC} MCP server built"
     else
         echo -e "  ${RED}✗${NC} MCP server NOT built"
-        ALL_OK=false
     fi
 
-    # Check Claude config
-    if [ -f "$HOME/.config/claude/claude_desktop_config.json" ] && grep -q "linux-control" "$HOME/.config/claude/claude_desktop_config.json" 2>/dev/null; then
-        echo -e "  ${GREEN}✓${NC} Claude Desktop configured"
+    if command -v claude &> /dev/null; then
+        echo -e "  ${GREEN}✓${NC} Claude CLI"
     else
-        echo -e "  ${YELLOW}~${NC} Claude Desktop not configured"
+        echo -e "  ${YELLOW}~${NC} Claude CLI not found"
     fi
 }
 
@@ -240,13 +195,11 @@ summary() {
     echo "╚═══════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "  Install path:  ${BLUE}$INSTALL_DIR${NC}"
-    echo -e "  Config path:   ${BLUE}$HOME/.config/claude/claude_desktop_config.json${NC}"
     echo ""
-    echo -e "  ${YELLOW}Please restart Claude Desktop to load the MCP server.${NC}"
-    echo ""
-    echo "  Manual start:  node $INSTALL_DIR/dist/index.js"
-    echo "  Update:        cd $INSTALL_DIR && git pull && npm run build"
-    echo "  Uninstall:     rm -rf $INSTALL_DIR"
+    echo -e "  Register MCP:  ${BLUE}claude mcp add linux-control -- node $INSTALL_DIR/dist/index.js${NC}"
+    echo -e "  Remove MCP:    ${BLUE}claude mcp remove linux-control${NC}"
+    echo -e "  Update:        ${BLUE}cd $INSTALL_DIR && git pull && npm run build${NC}"
+    echo -e "  Uninstall:     ${BLUE}claude mcp remove linux-control && rm -rf $INSTALL_DIR${NC}"
     echo ""
 }
 
@@ -257,7 +210,7 @@ main() {
     check_nodejs
     setup_repo
     build_project
-    configure_claude
+    register_mcp
     verify
     summary
 }
