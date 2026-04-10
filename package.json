@@ -1,0 +1,32 @@
+{
+  "name": "linux-control-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for AI-driven Linux desktop control via X11",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "linux-control-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build:python": "bash python-helpers/setup.sh",
+    "build": "tsc && chmod +x dist/index.js",
+    "setup": "npm run build:python && npm run build",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "sharp": "^0.33.5",
+    "ws": "^8.20.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
