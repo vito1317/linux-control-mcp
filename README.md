@@ -106,23 +106,23 @@ sudo apt install xdotool wmctrl x11-utils xclip maim python3-gi gir1.2-gtk-3.0 g
 npm install && npm run build
 
 # Register MCP
-claude mcp add linux-control -- node ~/.local/share/linux-control-mcp/dist/index.js
+claude mcp add linux-control -s user -- node ~/.local/share/linux-control-mcp/dist/index.js
 ```
 
 ## Usage
 
 ```bash
 # Register
-claude mcp add linux-control -- node ~/.local/share/linux-control-mcp/dist/index.js
+claude mcp add linux-control -s user -- node ~/.local/share/linux-control-mcp/dist/index.js
 
 # Remove
-claude mcp remove linux-control
+claude mcp remove linux-control -s user
 
 # Update
 cd ~/.local/share/linux-control-mcp && git pull && npm run build
 
 # Uninstall
-claude mcp remove linux-control && rm -rf ~/.local/share/linux-control-mcp
+claude mcp remove linux-control -s user && rm -rf ~/.local/share/linux-control-mcp
 ```
 
 ## Tool Reference
