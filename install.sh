@@ -180,14 +180,9 @@ except:
 
 perms = settings.setdefault('permissions', {})
 allow = perms.setdefault('allow', [])
-# Add both hyphen and underscore variants to cover all permission formats
-to_add = [
-    'mcp__linux-control',
-    'mcp__linux_control',
-]
-for p in to_add:
-    if p not in allow:
-        allow.append(p)
+# Server name is 'linux-control', Claude Code uses hyphen in permission prefix
+if 'mcp__linux-control' not in allow:
+    allow.append('mcp__linux-control')
 
 with open(settings_path, 'w') as f:
     json.dump(settings, f, indent=2)
